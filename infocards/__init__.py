@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Simple information card archive library
-# https://github.com/RMed/info-cards
+# https://github.com/RMed/infocards
 #
 # Copyright (C) 2014  Rafael Medina García <rafamedgar@gmail.com>
 #
@@ -18,15 +18,5 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-.. module:: archive
-    :platform: Unix, Windows
-    :synopsis: Archive operations
-
-.. moduleauthor:: Rafael Medina García <rafamedgar@gmail.com>
-"""
-
-from .card import Card
-
-
-
+from .archive import *
+from .card import *

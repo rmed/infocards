@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Simple information card archive library
-# https://github.com/RMed/info-cards
+# https://github.com/RMed/infocards
 #
 # Copyright (C) 2014  Rafael Medina García <rafamedgar@gmail.com>
 #
@@ -54,7 +54,7 @@ class Card:
 
             :param str tag_string: string of tags separated by commas
         """
-        return [t.trim() for t in tags.split(',')]
+        return [t.strip() for t in tags.split(',')]
 
     def tag_string(self, tag_list):
         """ Obtain a string of tags from a list. Each tag will be separated
