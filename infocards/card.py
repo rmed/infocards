@@ -37,26 +37,29 @@ class Card:
         :param str tags: tags are stored as a sequence of words and/or
             sentences separated by commas. However, the *Card* object
             will store the tags as a list for easier access.
+        :param datetime modified: last modification's date and time
 
         Note that in order to be able to search for cards, it is necessary
-        to include relevant information such as title, brief description
-        and some tags.
+        to include tags.
     """
 
-    def __init__(self, title, description, content, tags):
+    def __init__(self, title, description, content, tags, modified):
         self.title = title
         self.description = description
         self.content = content
         self.tags = self.tag_list(tags)
+        self.modified = modified
 
-    def tag_list(self, tag_string):
+    @staticmethod
+    def tag_list(tag_string):
         """ Obtain a tag list from a string.
 
             :param str tag_string: string of tags separated by commas
         """
-        return [t.strip() for t in tags.split(',')]
+        return [t.strip() for t in tag_string.split(',')]
 
-    def tag_string(self, tag_list):
+    @staticmethod
+    def tag_string(tag_list):
         """ Obtain a string of tags from a list. Each tag will be separated
             by a comma.
 

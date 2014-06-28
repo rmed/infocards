@@ -40,7 +40,7 @@ class _Card(_Base):
     __tablename__ = 'cards'
 
     id = Column(INTEGER, primary_key=True)
-    title = Column(TEXT)
+    title = Column(TEXT, unique=True)
     description = Column(TEXT)
     content = Column(TEXT)
     tags = Column(TEXT)
@@ -97,4 +97,30 @@ class Archive:
         self._insert(new_card)
         self._session.commit()
     
-    
+    def search_card(self, query):
+        """ Search for a card by using the specified query.
+
+            For the moment, creates a list from all the words of the query
+            and retrieves the card only if it has at least half of the
+            query terms in the tags
+
+            :param str query: search query
+
+            :returns list: list of **Card** objects
+        """
+        words = query.split(' ')
+        result = []
+        for c in self._session.query(_Card).order_by(_Card.title):
+            c_tags = Card.tag_list(c.tags)
+            common = list(set(c_tags).intersection(words))
+            if len(common) >= (len(words)/2):
+                new_card = Card(
+                        title=c.title,
+                        description=c.description,
+                        content=c.content,
+                        tags=c.tags,
+                        modified=c.modified
+                        )
+                result.append(new_card)
+
+        return result
