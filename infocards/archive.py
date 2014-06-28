@@ -26,10 +26,11 @@
 .. moduleauthor:: Rafael Medina García <rafamedgar@gmail.com>
 """
 
+from datetime import datetime
 from sqlalchemy import *
+from sqlalchemy import event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
-from time import strftime
 from .card import Card
 
 _Base = declarative_base()
@@ -43,7 +44,7 @@ class _Card(_Base):
     description = Column(TEXT)
     content = Column(TEXT)
     tags = Column(TEXT)
-    modified = Column(TEXT)
+    modified = Column(DATETIME, nullable=False)
 
 
 class Archive:
@@ -65,6 +66,12 @@ class Archive:
             :param _Card card: new card to insert
         """
         self._session.add(card)
+        
+    @event.listens_for(_Card, 'before_insert')
+    @event.listens_for(_Card, 'before_update')
+    def _set_date(mapper, connection, target):
+        """ Automatically set the modification date on the record. """
+        target.modified = datetime.now()
 
     def new_db(self):
         """ Create the corresponding schemas in the database. Used when
@@ -85,8 +92,9 @@ class Archive:
                 title=title,
                 description=description,
                 content=content,
-                tags=','.join([t.strip() for t in tags.split(',')]),
-                modified=strftime("%c")
+                tags=','.join([t.strip() for t in tags.split(',')])
                 )
         self._insert(new_card)
         self._session.commit()
+    
+    
