@@ -47,7 +47,7 @@ class _Card(_Base):
     modified = Column(DATETIME, nullable=False)
 
 
-class Archive:
+class Archive(object):
     """ Database connection. For the moment, only SQLite3 is supported.
 
         :param str db_path: path to the database
@@ -73,9 +73,9 @@ class Archive:
         """ Automatically set the modification date on the record. """
         target.modified = datetime.now()
 
-    def new_db(self):
-        """ Create the corresponding schemas in the database. Used when
-            connecting to an empty database.
+    def create_archive(self):
+        """ Create the corresponding schemas in the database. Must be used
+            when connecting to an empty database.
         """
         _Base.metadata.create_all(self._engine)
 
@@ -86,29 +86,34 @@ class Archive:
             :param str description: description of the card
             :param str content: plain text content of the card
             :param str tags: sequence of tags identifying the card separated
-                by commas
+                by whitespaces
         """
         new_card = _Card(
                 title=title,
                 description=description,
                 content=content,
-                tags=','.join([t.strip() for t in tags.split(',')])
+                tags=Card.tag_string(Card.tag_list(tags))
                 )
         self._insert(new_card)
         self._session.commit()
     
-    def search_card(self, query):
-        """ Search for a card by using the specified query.
+    def search(self, query):
+        """ Search for cards by using the specified query.
+
+            TODO: Improve search algorithm
 
             For the moment, creates a list from all the words of the query
-            and retrieves the card only if it has at least half of the
-            query terms in the tags
+            and retrieves a card only if it has at least half of the
+            query terms in its tags
+
+            Uses the *Card.tag_list()* static method so that the query has
+            the same format rules as the stored tags.
 
             :param str query: search query
 
             :returns list: list of **Card** objects
         """
-        words = query.split(' ')
+        words = Card.tag_list(query)
         result = []
         for c in self._session.query(_Card).order_by(_Card.title):
             c_tags = Card.tag_list(c.tags)

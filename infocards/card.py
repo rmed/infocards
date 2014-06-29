@@ -27,7 +27,7 @@
 """
 
 
-class Card:
+class Card(object):
     """ Cards have a simple structure and contain a small amount of
         information stored as plain text in the *Archive*.
 
@@ -35,8 +35,9 @@ class Card:
         :param str description: a small description of the card
         :param str content: content of the card
         :param str tags: tags are stored as a sequence of words and/or
-            sentences separated by commas. However, the *Card* object
-            will store the tags as a list for easier access.
+            sentences separated by whitespaces in the archive. However,
+            the *Card* object will store the tags as a list for
+            easier access.
         :param datetime modified: last modification's date and time
 
         Note that in order to be able to search for cards, it is necessary
@@ -54,15 +55,19 @@ class Card:
     def tag_list(tag_string):
         """ Obtain a tag list from a string.
 
-            :param str tag_string: string of tags separated by commas
+            This method is called when a new card is created. It will
+            remove duplicate tags, set the tags to lowercase and sort
+            the list when created.
+
+            :param str tag_string: string of tags separated by whitespaces
         """
-        return [t.strip() for t in tag_string.split(',')]
+        return sorted(set([t.lower() for t in tag_string.split()]))
 
     @staticmethod
     def tag_string(tag_list):
         """ Obtain a string of tags from a list. Each tag will be separated
-            by a comma.
+            by a whitespace.
 
             :param list tag_list: list of tags to convert
         """
-        return ','.join(tag_list)
+        return ' '.join(tag_list)
