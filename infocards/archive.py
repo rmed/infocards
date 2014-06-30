@@ -173,6 +173,9 @@ class Archive(object):
             raise Exception
 
         words = Card.tag_list(query)
+        if not words:
+            return self.all()
+
         result = []
         for c in self._session.query(_Card).order_by(_Card.title):
             common = []
