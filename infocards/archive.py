@@ -66,7 +66,7 @@ class Archive(object):
             :param _Card card: new card to insert
         """
         self._session.add(card)
-        
+
     @event.listens_for(_Card, 'before_insert')
     @event.listens_for(_Card, 'before_update')
     def _set_date(mapper, connection, target):
@@ -81,12 +81,12 @@ class Archive(object):
         card_list = []
         for c in self._session.query(_Card).all():
             new_card = Card(
-                    title=c.title,
-                    description=c.description,
-                    content=c.content,
-                    tags=c.tags,
-                    modified=c.modified
-                    )
+                title=c.title,
+                description=c.description,
+                content=c.content,
+                tags=c.tags,
+                modified=c.modified
+                )
             card_list.append(new_card)
 
         return card_list
@@ -111,19 +111,19 @@ class Archive(object):
         n, m = len(a), len(b)
         if n > m:
             # Make sure n <= m, to use O(min(n,m)) space
-            a,b = b,a
-            n,m = m,n
-            
+            a, b = b, a
+            n, m = m, n
+
         current = range(n+1)
-        for i in range(1,m+1):
-            previous, current = current, [i]+[0]*n
-            for j in range(1,n+1):
+        for i in range(1, m+1):
+            previous, current = current, [i] + [0]*n
+            for j in range(1, n+1):
                 add, delete = previous[j]+1, current[j-1]+1
                 change = previous[j-1]
                 if a[j-1] != b[i-1]:
                     change = change + 1
                 current[j] = min(add, delete, change)
-                
+
         return current[n]
 
     def new_card(self, title="", description="", content="", tags=""):
@@ -136,49 +136,80 @@ class Archive(object):
                 by whitespaces
         """
         new_card = _Card(
-                title=title,
-                description=description,
-                content=content,
-                tags=Card.tag_string(Card.tag_list(tags))
-                )
+            title=title,
+            description=description,
+            content=content,
+            tags=Card.tag_string(Card.tag_list(tags))
+            )
         self._insert(new_card)
         self._session.commit()
-    
-    def search(self, query, dist=1):
+
+    def search(self, query, alg="substring", dist=1):
         """ Search for cards by using the specified query.
 
-            Create a complete tag list from the title and the tags of a card
-            and compare the words in the query with those in this list by
-            calculating their Levenshtein distance.
+            A list of tags is created from the title and tags of the card
+            and then one of the two algorithms are used in the search.
+
+            If the *substring* algorithm is used, the archive will try
+            to match both the current query word and tag so that either
+            of them is contained within the other.
+
+            If the *distance* algorithm is used, the archive will
+            compute the Levenshtein distance and consider the result as
+            a match given the *dist* parameter.
 
             Uses the *Card.tag_list()* static method so that the query has
             the same format rules as the stored tags.
 
             :param str query: search query
-            :param int distance: distance value upon which the query words and
+            :param str alg: search algorithm to use. Possible values are
+                *substring* (default) and *distance*
+            :param int dist: distance value upon which the query words and
                 the tags are considered to match
 
             :returns list: list of **Card** objects
         """
+        if alg not in ["substring", "distance"]:
+            raise Exception
+
         words = Card.tag_list(query)
         result = []
         for c in self._session.query(_Card).order_by(_Card.title):
             common = []
-            c_tags = Card.tag_list(' '.join([c.title, c.tags]))
-            for tag in c_tags:
+
+            for tag in Card.tag_list(' '.join([c.title, c.tags])):
                 for word in words:
-                    if self.distance(word, tag) <= dist:
-                        print(word, tag, self.distance(word,tag))
+                    # Distance algorithm
+                    if alg is 'distance' and self.distance(word, tag) <= dist:
                         common.append(word)
                         common = list(set(common))
+                        break
+                    # Substring algorithm
+                    elif alg is 'substring' and self.submatch(word, tag):
+                        common.append(word)
+                        common = list(set(common))
+                        break
+
             if len(common) >= (len(words)/2):
                 new_card = Card(
-                        title=c.title,
-                        description=c.description,
-                        content=c.content,
-                        tags=c.tags,
-                        modified=c.modified
-                        )
+                    title=c.title,
+                    description=c.description,
+                    content=c.content,
+                    tags=c.tags,
+                    modified=c.modified
+                    )
                 result.append(new_card)
 
         return result
+
+    @staticmethod
+    def submatch(a, b):
+        """ Check if a contains b or b contains a
+
+            :param str a: first string to check (input)
+            :param str b: second string to check (tag)
+
+            :returns: True if either of the conditions is met,
+                otherwise False
+        """
+        return (a in b) or (b in a)
