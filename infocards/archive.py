@@ -97,6 +97,35 @@ class Archive(object):
         """
         _Base.metadata.create_all(self._engine)
 
+    @staticmethod
+    def distance(a, b):
+        """ Compute the Levenshtein distance between two words.
+
+            Implementation by Magnus Lie Hetland.
+
+            :param str input: first string to compare (input)
+            :param str tag: second string to compare (tag)
+
+            :returns int: Levenshtein distance for the two words
+        """
+        n, m = len(a), len(b)
+        if n > m:
+            # Make sure n <= m, to use O(min(n,m)) space
+            a,b = b,a
+            n,m = m,n
+            
+        current = range(n+1)
+        for i in range(1,m+1):
+            previous, current = current, [i]+[0]*n
+            for j in range(1,n+1):
+                add, delete = previous[j]+1, current[j-1]+1
+                change = previous[j-1]
+                if a[j-1] != b[i-1]:
+                    change = change + 1
+                current[j] = min(add, delete, change)
+                
+        return current[n]
+
     def new_card(self, title="", description="", content="", tags=""):
         """ Create a new card for the archive.
 
@@ -115,27 +144,33 @@ class Archive(object):
         self._insert(new_card)
         self._session.commit()
     
-    def search(self, query):
+    def search(self, query, dist=1):
         """ Search for cards by using the specified query.
 
-            TODO: Improve search algorithm
-
-            For the moment, creates a list from all the words of the query
-            and retrieves a card only if it has at least half of the
-            query terms in its tags
+            Create a complete tag list from the title and the tags of a card
+            and compare the words in the query with those in this list by
+            calculating their Levenshtein distance.
 
             Uses the *Card.tag_list()* static method so that the query has
             the same format rules as the stored tags.
 
             :param str query: search query
+            :param int distance: distance value upon which the query words and
+                the tags are considered to match
 
             :returns list: list of **Card** objects
         """
         words = Card.tag_list(query)
         result = []
         for c in self._session.query(_Card).order_by(_Card.title):
-            c_tags = Card.tag_list(c.tags)
-            common = list(set(c_tags).intersection(words))
+            common = []
+            c_tags = Card.tag_list(' '.join([c.title, c.tags]))
+            for tag in c_tags:
+                for word in words:
+                    if self.distance(word, tag) <= dist:
+                        print(word, tag, self.distance(word,tag))
+                        common.append(word)
+                        common = list(set(common))
             if len(common) >= (len(words)/2):
                 new_card = Card(
                         title=c.title,
