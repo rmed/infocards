@@ -73,6 +73,24 @@ class Archive(object):
         """ Automatically set the modification date on the record. """
         target.modified = datetime.now()
 
+    def all(self):
+        """ Obtain a list of all the cards stored in the archive.
+
+            :returns list: list of Card objects
+        """
+        card_list = []
+        for c in self._session.query(_Card).all():
+            new_card = Card(
+                    title=c.title,
+                    description=c.description,
+                    content=c.content,
+                    tags=c.tags,
+                    modified=c.modified
+                    )
+            card_list.append(new_card)
+
+        return card_list
+
     def create_archive(self):
         """ Create the corresponding schemas in the database. Must be used
             when connecting to an empty database.
