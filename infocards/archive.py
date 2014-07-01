@@ -26,9 +26,10 @@
 .. moduleauthor:: Rafael Medina García <rafamedgar@gmail.com>
 """
 
+from __future__ import absolute_import
 from datetime import datetime
-from sqlalchemy import *
-from sqlalchemy import event
+from sqlalchemy import Column, DateTime, Integer, Text
+from sqlalchemy import create_engine, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 from .card import Card
@@ -39,12 +40,12 @@ _Base = declarative_base()
 class _Card(_Base):
     __tablename__ = 'cards'
 
-    id = Column(INTEGER, primary_key=True)
-    title = Column(TEXT, unique=True)
-    description = Column(TEXT)
-    content = Column(TEXT)
-    tags = Column(TEXT)
-    modified = Column(DATETIME, nullable=False)
+    id = Column(Integer, primary_key=True)
+    title = Column(Text, unique=True)
+    description = Column(Text)
+    content = Column(Text)
+    tags = Column(Text)
+    modified = Column(DateTime, nullable=False)
 
 
 class Archive(object):
