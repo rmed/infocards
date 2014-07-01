@@ -52,10 +52,17 @@ class NoCardFound(ArchiveError):
     def __init__(self, message):
         self.message = message
 
+class ParamError(ArchiveError):
+    """ Raised when function parameters are not valid.
+
+        :param str message: error explanation
+    """
+
+    def __init__(self, message):
+        self.message = message
 
 class SearchError(ArchiveError):
-    """ Raised when an error occurs in the **search()**
-        method of the archive.
+    """ Raised when an error occurs when searching.
 
         :param str message: error explanation
     """

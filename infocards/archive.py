@@ -35,7 +35,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.orm.exc import NoResultFound
 from .card import Card
-from .exceptions import InsertError, NoCardFound, SearchError
+from .exceptions import InsertError, NoCardFound, ParamError
 
 _Base = declarative_base()
 
@@ -83,6 +83,17 @@ class Archive(object):
     def _set_date(mapper, connection, target):
         """ Automatically set the modification date on the record. """
         target.modified = datetime.now()
+
+    def _update(self, card, new_card):
+        """ Updates the content of a card with the new card.
+
+            :param _Card card: card to update
+            :param Card new_card: new card info
+        """
+        card.title = new_card.title
+        card.description = new_card.description
+        card.content = new_card.content
+        card.tags = Card.tag_string(new_card.tags)
 
     def all(self):
         """ Obtain a list of all the cards stored in the archive.
@@ -150,11 +161,11 @@ class Archive(object):
         try:
             card = self._session.query(_Card).filter(_Card.title==title).one()
             result = Card(
-                title=c.title,
-                description=c.description,
-                content=c.content,
-                tags=c.tags,
-                modified=c.modified
+                title=card.title,
+                description=card.description,
+                content=card.content,
+                tags=card.tags,
+                modified=card.modified
                 )
             return result
         except NoResultFound:
@@ -177,7 +188,7 @@ class Archive(object):
                 title=title,
                 description=description,
                 content=content,
-                tags=Card.tag_string(Card.tag_list(tags))
+                tags=Card.normalize(tag_string=tags)
                 )
             self._insert(new_card)
             self._session.commit()
@@ -224,7 +235,7 @@ class Archive(object):
             :returns list: list of **Card** objects
         """
         if alg not in ["substring", "distance"]:
-            raise SearchError("Invalid algorithm: '%s'" % alg)
+            raise ParamError("Invalid algorithm: '%s'" % alg)
 
         words = Card.tag_list(query)
         if not words:
@@ -270,3 +281,18 @@ class Archive(object):
                 otherwise False
         """
         return (a in b) or (b in a)
+
+    def update_card(self, title, new_card):
+        """ Update the information of a card.
+
+            :param str title: title of the card to update
+            :param Card new_card: *Card* object with the updated information
+
+            :raises NoCardFound: raised when the card to update is not found
+        """
+        try:
+            card = self._session.query(_Card).filter(_Card.title==title).one()
+            self._update(card, new_card)
+            self._session.commit()
+        except NoResultFound:
+            raise NoCardFound("Card '%s' does not exist" % title)

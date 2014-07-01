@@ -26,6 +26,9 @@
 .. moduleauthor:: Rafael Medina García <rafamedgar@gmail.com>
 """
 
+from __future__ import absolute_import
+from .exceptions import ParamError
+
 
 class Card(object):
     """ Cards have a simple structure and contain a small amount of
@@ -52,6 +55,25 @@ class Card(object):
         self.modified = modified
 
     @staticmethod
+    def normalize(tag_list=None, tag_string=None):
+        """ Normalize a tag string or list.
+
+            Normalization is achieved by removing repeated words and
+            transforming everyword into lowercase.
+
+            :param list tag_list: tag list to normalize
+                (useful when modifying card tags)
+            :param str tag_string: tag string to normalize
+        """
+        if tag_list and tag_string:
+            raise ParamError("Only one parameter type may be normalized")
+
+        if tag_list:
+            return sorted(set([t.lower() for t in tag_list]))
+        else:
+            return ' '.join(sorted(set([t.lower() for t in tag_string.split()])))
+
+    @staticmethod
     def tag_list(tag_string):
         """ Obtain a tag list from a string.
 
@@ -61,7 +83,7 @@ class Card(object):
 
             :param str tag_string: string of tags separated by whitespaces
         """
-        return sorted(set([t.lower() for t in tag_string.split()]))
+        return Card.normalize(tag_list=tag_string.split())
 
     @staticmethod
     def tag_string(tag_list):
@@ -70,4 +92,4 @@ class Card(object):
 
             :param list tag_list: list of tags to convert
         """
-        return ' '.join(tag_list)
+        return Card.normalize(tag_string=' '.join(tag_list))
