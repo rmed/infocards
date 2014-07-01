@@ -30,9 +30,12 @@ from __future__ import absolute_import
 from datetime import datetime
 from sqlalchemy import Column, DateTime, Integer, Text
 from sqlalchemy import create_engine, event
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm.exc import NoResultFound
 from .card import Card
+from .exceptions import InsertError, NoCardFound, SearchError
 
 _Base = declarative_base()
 
@@ -67,6 +70,13 @@ class Archive(object):
             :param _Card card: new card to insert
         """
         self._session.add(card)
+
+    def _delete(self, card):
+        """ RDelete the specified card from the archive database.
+
+            :param _Card card: card to delete
+        """
+        self._session.delete(card)
 
     @event.listens_for(_Card, 'before_insert')
     @event.listens_for(_Card, 'before_update')
@@ -127,6 +137,29 @@ class Archive(object):
 
         return current[n]
 
+    def get_card(self, title):
+        """ Obtain a card from the archive.
+
+            This is a direct search, so the title (or the row id) must
+            be written as in the stored card.
+
+            :param str title: title of the card to get
+
+            :raises NoCardFound: raised when the card does not exist
+        """
+        try:
+            card = self._session.query(_Card).filter(_Card.title==title).one()
+            result = Card(
+                title=c.title,
+                description=c.description,
+                content=c.content,
+                tags=c.tags,
+                modified=c.modified
+                )
+            return result
+        except NoResultFound:
+            raise NoCardFound("Card '%s' does not exist" % title)
+
     def new_card(self, title="", description="", content="", tags=""):
         """ Create a new card for the archive.
 
@@ -135,15 +168,35 @@ class Archive(object):
             :param str content: plain text content of the card
             :param str tags: sequence of tags identifying the card separated
                 by whitespaces
+
+            :raises InsertError: raised when a card already exists in
+                the archive
         """
-        new_card = _Card(
-            title=title,
-            description=description,
-            content=content,
-            tags=Card.tag_string(Card.tag_list(tags))
-            )
-        self._insert(new_card)
-        self._session.commit()
+        try:
+            new_card = _Card(
+                title=title,
+                description=description,
+                content=content,
+                tags=Card.tag_string(Card.tag_list(tags))
+                )
+            self._insert(new_card)
+            self._session.commit()
+        except IntegrityError:
+            raise InsertError("Card '%s' already exists" % title)
+
+    def remove_card(self, title):
+        """ Remove a card from the archive.
+
+            :param str title: title of the card to remove
+
+            :raises NoCardFound: raised when the card cannot be found
+        """
+        try:
+            card = self._session.query(_Card).filter(_Card.title==title).one()
+            self._delete(card)
+            self._session.commit()
+        except NoResultFound:
+            raise NoCardFound("Card '%s' does not exist" % title)
 
     def search(self, query, alg="substring", dist=1):
         """ Search for cards by using the specified query.
@@ -171,7 +224,7 @@ class Archive(object):
             :returns list: list of **Card** objects
         """
         if alg not in ["substring", "distance"]:
-            raise Exception
+            raise SearchError("Invalid algorithm: '%s'" % alg)
 
         words = Card.tag_list(query)
         if not words:
