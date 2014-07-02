@@ -71,7 +71,8 @@ class Card(object):
         if tag_list:
             return sorted(set([t.lower() for t in tag_list]))
         else:
-            return ' '.join(sorted(set([t.lower() for t in tag_string.split()])))
+            return ' '.join(sorted(set(
+                [t.lower() for t in tag_string.split()])))
 
     @staticmethod
     def tag_list(tag_string):

@@ -159,13 +159,13 @@ class Archive(object):
             :raises NoCardFound: raised when the card does not exist
         """
         try:
-            card = self._session.query(_Card).filter(_Card.title==title).one()
+            c = self._session.query(_Card).filter(_Card.title == title).one()
             result = Card(
-                title=card.title,
-                description=card.description,
-                content=card.content,
-                tags=card.tags,
-                modified=card.modified
+                title=c.title,
+                description=c.description,
+                content=c.content,
+                tags=c.tags,
+                modified=c.modified
                 )
             return result
         except NoResultFound:
@@ -203,8 +203,8 @@ class Archive(object):
             :raises NoCardFound: raised when the card cannot be found
         """
         try:
-            card = self._session.query(_Card).filter(_Card.title==title).one()
-            self._delete(card)
+            c = self._session.query(_Card).filter(_Card.title == title).one()
+            self._delete(c)
             self._session.commit()
         except NoResultFound:
             raise NoCardFound("Card '%s' does not exist" % title)
@@ -291,8 +291,8 @@ class Archive(object):
             :raises NoCardFound: raised when the card to update is not found
         """
         try:
-            card = self._session.query(_Card).filter(_Card.title==title).one()
-            self._update(card, new_card)
+            c = self._session.query(_Card).filter(_Card.title == title).one()
+            self._update(c, new_card)
             self._session.commit()
         except NoResultFound:
             raise NoCardFound("Card '%s' does not exist" % title)
