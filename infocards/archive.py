@@ -125,8 +125,8 @@ class Archive(object):
 
             Implementation by Magnus Lie Hetland.
 
-            :param str input: first string to compare (input)
-            :param str tag: second string to compare (tag)
+            :param str a: first string to compare (input)
+            :param str b: second string to compare (tag)
 
             :returns int: Levenshtein distance for the two words
         """
@@ -209,13 +209,13 @@ class Archive(object):
         except NoResultFound:
             raise NoCardFound("Card '%s' does not exist" % title)
 
-    def search(self, query, alg="substring", dist=1):
+    def search(self, query, alg="submatch", dist=1):
         """ Search for cards by using the specified query.
 
             A list of tags is created from the title and tags of the card
             and then one of the two algorithms are used in the search.
 
-            If the *substring* algorithm is used, the archive will try
+            If the *submatch* algorithm is used, the archive will try
             to match both the current query word and tag so that either
             of them is contained within the other.
 
@@ -234,7 +234,7 @@ class Archive(object):
 
             :returns list: list of **Card** objects
         """
-        if alg not in ["substring", "distance"]:
+        if alg not in ["submatch", "distance"]:
             raise ParamError("Invalid algorithm: '%s'" % alg)
 
         words = Card.tag_list(query)
@@ -252,8 +252,8 @@ class Archive(object):
                         common.append(word)
                         common = list(set(common))
                         break
-                    # Substring algorithm
-                    elif alg is 'substring' and self.submatch(word, tag):
+                    # Submatch algorithm
+                    elif alg is 'submatch' and self.submatch(word, tag):
                         common.append(word)
                         common = list(set(common))
                         break
