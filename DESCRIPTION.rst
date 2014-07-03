@@ -2,6 +2,7 @@ infocards
 =========
 
 Simple information card archive library
+
 Compatible with **Python 2 and 3**
 
 .. _GitHub: https://github.com/RMed/infocards
@@ -15,11 +16,11 @@ Installation
 
 Installing from source archive file (Windows or UNIX)::
 
-    $ python pip install path/to/archive
+    $ pip install path/to/archive
 
 Installing from the package index (Windows or UNIX)::
 
-    $ python pip install infocards
+    $ pip install infocards
 
 Documentation
 -------------
