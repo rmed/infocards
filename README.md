@@ -33,4 +33,4 @@ Then go to the *docs* directory and run:
 $ make html
 ```
 
-The html documentation will be inside the *_build* directory.
+The html documentation will be inside the *docs/_build/html* directory.

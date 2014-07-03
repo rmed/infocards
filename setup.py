@@ -22,11 +22,18 @@ from infocards import __version__
 from setuptools import setup
 from os import path
 
+here = path.abspath(path.dirname(__file__))
+
+# Get the long description from the relevant file
+with open(path.join(here, 'DESCRIPTION.rst'), encoding='utf-8') as f:
+    long_description = f.read()
+
 setup(
     name='infocards',
     version=__version__,
 
     description='Simple information card archive library',
+    long_description=long_description,
 
     url='https://github.com/RMed/infocards',
 
@@ -40,13 +47,13 @@ setup(
         'Intended Audience :: Developers',
         'Topic :: Database',
         'Topic :: Utilities',
-        'License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)'
+        'License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7'
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4'
+        'Programming Language :: Python :: 3.4',
     ],
 
     keywords='information card archive database',
@@ -54,6 +61,4 @@ setup(
     packages=['infocards'],
 
     install_requires=['SQLAlchemy >= 0.9.6'],
-
-    data_files=[('', ['COPYING', 'COPYING.lesser'])]
 )

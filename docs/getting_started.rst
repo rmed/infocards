@@ -65,6 +65,18 @@ Retrieving a card
     my_card = ar.get_card('This is my new card') # If a card with that title exists, now you can access all its information
 
 
+Retrieving a list of all the cards
+----------------------------------
+
+If you want a complete list of all the :doc:`cards` in the archive, simply do::
+
+    from infocards import Archive
+
+    ar = Archive('myarchive.dat')
+
+    all_cards = ar.all()
+
+
 Updating a card
 ---------------
 

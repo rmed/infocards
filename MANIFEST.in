@@ -1,2 +1,6 @@
+exclude README.md
+exclude .gitignore
 include COPYING
 include COPYING.lesser
+recursive-include docs/ *
+prune docs/_build
