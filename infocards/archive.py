@@ -34,6 +34,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.types import VARCHAR
 from .card import Card
 from .exceptions import InsertError, NoCardFound, ParamError
 
@@ -44,7 +45,8 @@ class _Card(_Base):
     __tablename__ = 'cards'
 
     id = Column(Integer, primary_key=True)
-    title = Column(Text, unique=True)
+    #title = Column(Text, unique=True)
+    title = Column(VARCHAR(256), unique=True)
     description = Column(Text)
     content = Column(Text)
     tags = Column(Text)
@@ -52,14 +54,14 @@ class _Card(_Base):
 
 
 class Archive(object):
-    """ Database connection. For the moment, only SQLite3 is supported.
+    """ Database connection. 
 
-        :param str db_path: path to the database
+        **kwargs contains the database connection information. Check the
+        documentation on the *_create_engine()* method for details.
     """
 
-    def __init__(self, db_path):
-        self.db_path = db_path
-        self._engine = create_engine('sqlite:////' + db_path)
+    def __init__(self, **kwargs):
+        self._engine = self._create_engine(**kwargs)
         factory = sessionmaker(bind=self._engine)
         self._scope = scoped_session(factory)
         self._session = self._scope()
@@ -77,6 +79,73 @@ class Archive(object):
             :param _Card card: card to delete
         """
         self._session.delete(card)
+
+    def _create_engine(self, **info):
+        """ Set the corresponding engine conenction depending on the supplied
+            **info.
+
+            Currently supports MySQL, PostgreSQL, SQLite.
+
+            Below are the parameters you should provide in order to connect
+            to the databases.
+
+            MySQL - requires 'pymysql' module
+                mysql = database host
+                user = database user
+                passwd = database password (if any)
+                port = database port (if any)
+                db = database name
+
+            PostgreSQL - requires 'pg8000' module
+                postgresql = database host
+                user = database user
+                passwd = database password (if any)
+                port = database port (if any)
+                db = database name
+                ssl = whether to use SSL or not (defaults to false)
+
+            SQLite
+                sqlite = absolute path to the database file
+
+            :returns: SQLAlchemy engine
+        """
+        conn_str = ""
+        if "mysql" in info.keys():
+            user = info["user"]
+            passwd = ""
+            if "passwd" in info.keys():
+                passwd = ":" + info["passwd"]
+            host = "@" + info["mysql"]
+            port = ""
+            if "port" in info.keys():
+                port = ":" + info["port"]
+            db = "/" + info["db"]
+
+            conn_str = "mysql+pymysql://" + user + passwd + host + port + db
+
+        elif "postgresql" in info.keys():
+            user = info["user"]
+            passwd = ""
+            if "passwd" in info.keys():
+                passwd = ":" + info["passwd"]
+            host = "@" + info["postgresql"]
+            port = ""
+            if "port" in info.keys():
+                port = ":" + info["port"]
+            db = "/" + info["db"]
+            ssl = ""
+            if "ssl" in info.keys():
+                if info["ssl"]:
+                    ssl = "?ssl=true"
+                else:
+                    ssl = ""
+
+            conn_str = "postgresql+pg8000://" + user + passwd + host + port + db + ssl
+
+        elif "sqlite" in info.keys():
+            conn_str = "sqlite:////" + info["sqlite"]
+
+        return create_engine(conn_str)
 
     @event.listens_for(_Card, 'before_insert')
     @event.listens_for(_Card, 'before_update')
