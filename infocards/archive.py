@@ -28,6 +28,7 @@
 
 from __future__ import absolute_import
 from datetime import datetime
+from fuzzywuzzy import fuzz
 from sqlalchemy import Column, DateTime, Integer, Text
 from sqlalchemy import create_engine, event
 from sqlalchemy.exc import IntegrityError
@@ -74,7 +75,7 @@ class Archive(object):
         self._session.add(card)
 
     def _delete(self, card):
-        """ RDelete the specified card from the archive database.
+        """ Delete the specified card from the archive database.
 
             :param _Card card: card to delete
         """
@@ -188,35 +189,6 @@ class Archive(object):
         """
         _Base.metadata.create_all(self._engine)
 
-    @staticmethod
-    def distance(a, b):
-        """ Compute the Levenshtein distance between two words.
-
-            Implementation by Magnus Lie Hetland.
-
-            :param str a: first string to compare (input)
-            :param str b: second string to compare (tag)
-
-            :returns int: Levenshtein distance for the two words
-        """
-        n, m = len(a), len(b)
-        if n > m:
-            # Make sure n <= m, to use O(min(n,m)) space
-            a, b = b, a
-            n, m = m, n
-
-        current = range(n+1)
-        for i in range(1, m+1):
-            previous, current = current, [i] + [0]*n
-            for j in range(1, n+1):
-                add, delete = previous[j]+1, current[j-1]+1
-                change = previous[j-1]
-                if a[j-1] != b[i-1]:
-                    change = change + 1
-                current[j] = min(add, delete, change)
-
-        return current[n]
-
     def get_card(self, title):
         """ Obtain a card from the archive.
 
@@ -278,33 +250,28 @@ class Archive(object):
         except NoResultFound:
             raise NoCardFound("Card '%s' does not exist" % title)
 
-    def search(self, query, alg="submatch", dist=1):
-        """ Search for cards by using the specified query.
+    def search(self, query, likelihood=80, relevance=50):
+        """ Search for cards using the specified query.
 
-            A list of tags is created from the title and tags of the card
-            and then one of the two algorithms are used in the search.
+            A list of tags is created from the *title* and *tags* of the
+            card and then compared with the query. If the percentage of
+            query words present in the card list is greater or equal
+            than *relevance*, then that card is added to the result.
 
-            If the *submatch* algorithm is used, the archive will try
-            to match both the current query word and tag so that either
-            of them is contained within the other.
-
-            If the *distance* algorithm is used, the archive will
-            compute the Levenshtein distance and consider the result as
-            a match given the *dist* parameter.
-
-            Uses the *Card.tag_list()* static method so that the query has
-            the same format rules as the stored tags.
+            If the query is empty, then a list of all the cards in the
+            archive is returned.
 
             :param str query: search query
-            :param str alg: search algorithm to use. Possible values are
-                *substring* (default) and *distance*
-            :param int dist: distance value upon which the query words and
-                the tags are considered to match
+            :param int likelihood: percentage for which two words are
+                considered to be alike (0-100)
+            :param int relevance: percentage for which a search query is
+                considered relevant to the card. (0-100)
 
-            :returns list: list of **Card** objects
+            :returns: list of **Card**
         """
-        if alg not in ["submatch", "distance"]:
-            raise ParamError("Invalid algorithm: '%s'" % alg)
+        if likelihood not in range(0, 100) or relevance not in range(0, 100):
+            raise ParamError(
+                    "likelihood and relevance must be in range 0-100")
 
         words = Card.tag_list(query)
         if not words:
@@ -316,40 +283,21 @@ class Archive(object):
 
             for tag in Card.tag_list(' '.join([c.title, c.tags])):
                 for word in words:
-                    # Distance algorithm
-                    if alg is 'distance' and self.distance(word, tag) <= dist:
-                        common.append(word)
-                        common = list(set(common))
-                        break
-                    # Submatch algorithm
-                    elif alg is 'submatch' and self.submatch(word, tag):
+                    if fuzz.ratio(word, tag) >= likelihood:
                         common.append(word)
                         common = list(set(common))
                         break
 
-            if len(common) >= (len(words)/2):
+            if int((len(common) / len(words)) * 100) >= relevance:
                 new_card = Card(
-                    title=c.title,
-                    description=c.description,
-                    content=c.content,
-                    tags=c.tags,
-                    modified=c.modified
-                    )
+                        title=c.title,
+                        description=c.description,
+                        content=c.content,
+                        tags=c.tags,
+                        modified=c.modified)
                 result.append(new_card)
 
         return result
-
-    @staticmethod
-    def submatch(a, b):
-        """ Check if a contains b or b contains a
-
-            :param str a: first string to check (input)
-            :param str b: second string to check (tag)
-
-            :returns: True if either of the conditions is met,
-                otherwise False
-        """
-        return (a in b) or (b in a)
 
     def update_card(self, title, new_card):
         """ Update the information of a card.

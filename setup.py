@@ -61,8 +61,9 @@ setup(
     packages=['infocards'],
 
     install_requires=[
-        'SQLAlchemy >= 0.9.7',
+        'fuzzywuzzy >= 0.2.1',
         'PyMySQL >= 0.6.2',
         'pg8000 >= 1.9.13',
+        'SQLAlchemy >= 0.9.7',
     ],
 )
