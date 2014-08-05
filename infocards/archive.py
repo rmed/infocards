@@ -168,7 +168,7 @@ class Archive(object):
     def all(self):
         """ Obtain a list of all the cards stored in the archive.
 
-            :returns list: list of Card objects
+            :returns: list of Card objects
         """
         card_list = []
         for c in self._session.query(_Card).all():
