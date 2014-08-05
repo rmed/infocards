@@ -1,0 +1,1 @@
+-e git://github.com/rmed/infocards.git#egg=infocards

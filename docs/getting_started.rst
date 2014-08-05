@@ -1,11 +1,22 @@
 Getting Started
 =================
 
+.. _fuzzywuzzy: https://github.com/seatgeek/fuzzywuzzy
 .. _pip: https://pypi.python.org/pypi/pip
+.. _pg8000: https://github.com/mfenniak/pg8000
+.. _PyMySQL: https://github.com/PyMySQL/PyMySQL
 .. _SQLAlchemy: http://www.sqlalchemy.org/
 .. _setuptools: https://pypi.python.org/pypi/setuptools
 
 This document will show you a quick introduction on how to easily install and use the infocards library.
+
+Requirements
+------------
+
+- `fuzzywuzzy`_ >= 0.2.1
+- `pg8000`_ >= 1.9.13
+- `PyMYSQL`_ >= 0.6.2
+- `SQLAlchemy`_ >= 0.9.7
 
 Installation
 ------------
@@ -14,7 +25,7 @@ Installation
 
     $ python setup.py install
 
-`setuptools`_ will also try to download the additional libraries required in the code (`SQLAlchemy`_).
+`setuptools`_ will also try to download the additional libraries required in the code.
 
 However, the **recommended installation method** is to directly use `pip`_ to download and install the package (including dependencies) from the package index::
 
@@ -28,11 +39,10 @@ Once installed, creating a new archive (or connecting to an already existing one
 
     from infocards import Archive
 
-    ar = Archive('myarchive.dat') # Be creative with your archive name!
+    ar = Archive(CONNECTION_INFORMATION) # Be creative with your archive name!
     ar.create_archive() # Use this only if you are creating an archive from scratch
 
-Done, your archive is ready and awaiting its cards. Also note that the library is based around an SQLite database, so you can have as many different archive database files as you want.
-
+Done, your archive is ready and awaiting its cards. From version 0.2.0 and up, the library supports working with MySQL, PostgreSQL and SQLite databases. For details on the connection information for each database type, check :doc:`archive`.
 
 Inserting a new card
 --------------------
@@ -116,12 +126,5 @@ Having to know all the card titles by heart can (and will) become frustrating. F
 
     ar = Archive('myarchive.dat')
 
-    # Search for 'Python' using submatch algorithm
-    result = ar.search('Python') 
-
-    # Search for 'Python' using distance algorithm
-    result = ar.search('Python', alg='distance')
-
-    # In both cases, the result is a list of Card objects
-
-For more information on the search algorithms, have a look at the :doc:`cards` document.
+    # Search for cards containing 'Python' 
+    result = ar.search('Python') # List of cards
