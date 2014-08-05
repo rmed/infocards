@@ -1,0 +1,4 @@
+PyMySQL==0.6.2
+SQLAlchemy==0.9.7
+-e git://github.com/seatgeek/fuzzywuzzy#egg=fuzzywuzzy
+pg8000==1.9.13
