@@ -18,7 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from infocards import __version__
 from setuptools import setup
 from os import path
 
@@ -30,7 +29,7 @@ with open(path.join(here, 'DESCRIPTION.rst'), encoding='utf-8') as f:
 
 setup(
     name='infocards',
-    version=__version__,
+    version='dev',
 
     description='Simple information card archive library',
     long_description=long_description,

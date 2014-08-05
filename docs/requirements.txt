@@ -1,2 +1,0 @@
--e git+https://github.com/seatgeek/fuzzywuzzy.git@f773b295dd4abaf3d47000ddbdd0d01150125662#egg=fuzzywuzzy-origin/HEAD
--e git+https://github.com/rmed/infocards.git@dev#infocards
