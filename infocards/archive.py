@@ -173,12 +173,11 @@ class Archive(object):
         card_list = []
         for c in self._session.query(_Card).all():
             new_card = Card(
-                title=c.title,
-                description=c.description,
-                content=c.content,
-                tags=c.tags,
-                modified=c.modified
-                )
+                c.title,
+                c.description,
+                c.content,
+                c.tags,
+                c.modified)
             card_list.append(new_card)
 
         return card_list
@@ -202,12 +201,11 @@ class Archive(object):
         try:
             c = self._session.query(_Card).filter(_Card.title == title).one()
             result = Card(
-                title=c.title,
-                description=c.description,
-                content=c.content,
-                tags=c.tags,
-                modified=c.modified
-                )
+                c.title,
+                c.description,
+                c.content,
+                c.tags,
+                c.modified)
             return result
         except NoResultFound:
             raise NoCardFound("Card '%s' does not exist" % title)
@@ -226,11 +224,10 @@ class Archive(object):
         """
         try:
             new_card = _Card(
-                title=title,
-                description=description,
-                content=content,
-                tags=Card.normalize(tag_string=tags)
-                )
+                title,
+                description,
+                content,
+                Card.normalize(tag_string=tags))
             self._insert(new_card)
             self._session.commit()
         except IntegrityError:
@@ -290,11 +287,11 @@ class Archive(object):
 
             if int((len(common) / len(words)) * 100) >= relevance:
                 new_card = Card(
-                        title=c.title,
-                        description=c.description,
-                        content=c.content,
-                        tags=c.tags,
-                        modified=c.modified)
+                    c.title,
+                    c.description,
+                    c.content,
+                    c.tags,
+                    c.modified)
                 result.append(new_card)
 
         return result
