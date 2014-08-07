@@ -29,7 +29,7 @@ with open(path.join(here, 'DESCRIPTION.rst'), encoding='utf-8') as f:
 
 setup(
     name='infocards',
-    version='dev',
+    version='0.2.0',
 
     description='Simple information card archive library',
     long_description=long_description,
@@ -42,7 +42,7 @@ setup(
     license='LGPLv3',
 
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Topic :: Database',
         'Topic :: Utilities',
