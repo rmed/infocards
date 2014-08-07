@@ -46,7 +46,6 @@ class _Card(_Base):
     __tablename__ = 'cards'
 
     id = Column(Integer, primary_key=True)
-    #title = Column(Text, unique=True)
     title = Column(VARCHAR(256), unique=True)
     description = Column(Text)
     content = Column(Text)
