@@ -59,7 +59,7 @@ class Card(object):
         """ Normalize a tag string or list.
 
             Normalization is achieved by removing repeated words and
-            transforming everyword into lowercase.
+            transforming every word into lowercase.
 
             :param list tag_list: tag list to normalize
                 (useful when modifying card tags)
@@ -68,11 +68,16 @@ class Card(object):
         if tag_list and tag_string:
             raise ParamError("Only one parameter type may be normalized")
 
-        if tag_list:
+        elif tag_list:
             return sorted(set([t.lower() for t in tag_list]))
-        else:
+
+        elif tag_string:
             return ' '.join(sorted(set(
                 [t.lower() for t in tag_string.split()])))
+
+        else:
+            # Nothing to normalize
+            return
 
     @staticmethod
     def tag_list(tag_string):
