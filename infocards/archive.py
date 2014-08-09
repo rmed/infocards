@@ -223,10 +223,10 @@ class Archive(object):
         """
         try:
             new_card = _Card(
-                title,
-                description,
-                content,
-                Card.normalize(tag_string=tags))
+                title=title,
+                description=description,
+                content=content,
+                tags=Card.normalize(tag_string=tags))
             self._insert(new_card)
             self._session.commit()
         except IntegrityError:
