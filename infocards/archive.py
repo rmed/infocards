@@ -54,10 +54,31 @@ class _Card(_Base):
 
 
 class Archive(object):
-    """ Database connection. 
+    """ Database connection.
 
-        **kwargs contains the database connection information. Check the
-        documentation on the *_create_engine()* method for details.
+        Currently supports MySQL, PostgreSQL, SQLite. 
+
+        **kwargs contains the database connection information. 
+
+        These are the parameters required for each database type.
+
+        MySQL - requires 'pymysql' module
+            mysql = database host
+            user = database user
+            passwd = database password (if any)
+            port = database port (if any)
+            db = database name
+
+        PostgreSQL - requires 'pg8000' module
+            postgresql = database host
+            user = database user
+            passwd = database password (if any)
+            port = database port (if any)
+            db = database name
+            ssl = whether to use SSL or not (defaults to false)
+
+        SQLite
+            sqlite = absolute path to the database file
     """
 
     def __init__(self, **kwargs):
@@ -83,29 +104,6 @@ class Archive(object):
     def _create_engine(self, **info):
         """ Set the corresponding engine conenction depending on the supplied
             **info.
-
-            Currently supports MySQL, PostgreSQL, SQLite.
-
-            Below are the parameters you should provide in order to connect
-            to the databases.
-
-            MySQL - requires 'pymysql' module
-                mysql = database host
-                user = database user
-                passwd = database password (if any)
-                port = database port (if any)
-                db = database name
-
-            PostgreSQL - requires 'pg8000' module
-                postgresql = database host
-                user = database user
-                passwd = database password (if any)
-                port = database port (if any)
-                db = database name
-                ssl = whether to use SSL or not (defaults to false)
-
-            SQLite
-                sqlite = absolute path to the database file
 
             :returns: SQLAlchemy engine
         """
