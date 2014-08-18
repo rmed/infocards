@@ -30,14 +30,14 @@ from __future__ import absolute_import
 from datetime import datetime
 from fuzzywuzzy import fuzz
 from sqlalchemy import Column, DateTime, Integer, Text
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, inspect
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.types import VARCHAR
 from .card import Card
-from .exceptions import InsertError, NoCardFound, ParamError
+from .exceptions import InsertError, NoCardFound, NotAnArchive, ParamError
 
 _Base = declarative_base()
 
@@ -166,7 +166,13 @@ class Archive(object):
         """ Obtain a list of all the cards stored in the archive.
 
             :returns: list of Card objects
+
+            :raises NotAnArchive: raised when the Archive tables do
+                not exist in the database
         """
+        if not self.is_archive():
+            raise NotAnArchive("Database is not an Archive, missing tables")
+
         card_list = []
         for c in self._session.query(_Card).all():
             new_card = Card(
@@ -194,7 +200,12 @@ class Archive(object):
             :param str title: title of the card to get
 
             :raises NoCardFound: raised when the card does not exist
+            :raises NotAnArchive: raised when the Archive tables do
+                not exist in the database
         """
+        if not self.is_archive():
+            raise NotAnArchive("Database is not an Archive, missing tables")
+
         try:
             c = self._session.query(_Card).filter(_Card.title == title).one()
             result = Card(
@@ -207,6 +218,15 @@ class Archive(object):
         except NoResultFound:
             raise NoCardFound("Card '%s' does not exist" % title)
 
+    def is_archive(self):
+        """ Check whether the database has the required tables to be
+            considered as an Archive.
+
+            :returns: True or False
+        """
+        insp = inspect(self._engine)
+        return _Card.__tablename__ in insp.get_table_names()
+
     def new_card(self, title="", description="", content="", tags=""):
         """ Create a new card for the archive.
 
@@ -218,7 +238,12 @@ class Archive(object):
 
             :raises InsertError: raised when a card already exists in
                 the archive
+            :raises NotAnArchive: raised when the Archive tables do
+                not exist in the database
         """
+        if not self.is_archive():
+            raise NotAnArchive("Database is not an Archive, missing tables")
+
         try:
             new_card = _Card(
                 title=title,
@@ -236,7 +261,12 @@ class Archive(object):
             :param str title: title of the card to remove
 
             :raises NoCardFound: raised when the card cannot be found
+            :raises NotAnArchive: raised when the Archive tables do
+                not exist in the database
         """
+        if not self.is_archive():
+            raise NotAnArchive("Database is not an Archive, missing tables")
+
         try:
             c = self._session.query(_Card).filter(_Card.title == title).one()
             self._delete(c)
@@ -262,7 +292,13 @@ class Archive(object):
                 considered relevant to the card. (0-100)
 
             :returns: list of **Card**
+
+            :raises NotAnArchive: raised when the Archive tables do
+                not exist in the database
         """
+        if not self.is_archive():
+            raise NotAnArchive("Database is not an Archive, missing tables")
+
         if likelihood not in range(0, 100) or relevance not in range(0, 100):
             raise ParamError(
                     "likelihood and relevance must be in range 0-100")
@@ -300,7 +336,12 @@ class Archive(object):
             :param Card new_card: *Card* object with the updated information
 
             :raises NoCardFound: raised when the card to update is not found
+            :raises NotAnArchive: raised when the Archive tables do
+                not exist in the database
         """
+        if not self.is_archive():
+            raise NotAnArchive("Database is not an Archive, missing tables")
+
         try:
             c = self._session.query(_Card).filter(_Card.title == title).one()
             self._update(c, new_card)

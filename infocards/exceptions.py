@@ -52,6 +52,18 @@ class NoCardFound(ArchiveError):
     def __init__(self, message):
         self.message = message
 
+
+class NotAnArchive(ArchiveError):
+    """ Raised when the connected database is not an Archive
+        (does not have the required tables)
+
+        :param str message: error explanation
+    """
+
+    def __init__(self, message):
+        self.message = message
+
+
 class ParamError(ArchiveError):
     """ Raised when function parameters are not valid.
 
@@ -60,6 +72,7 @@ class ParamError(ArchiveError):
 
     def __init__(self, message):
         self.message = message
+
 
 class SearchError(ArchiveError):
     """ Raised when an error occurs when searching.
