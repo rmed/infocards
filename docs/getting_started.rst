@@ -37,9 +37,9 @@ Creating an archive
 
 Once installed, creating a new archive (or connecting to an already existing one) is as easy as this::
 
-    from infocards import Archive
+    from infocards.archive import Archive
 
-    ar = Archive(CONNECTION_INFORMATION) # Be creative with your archive name!
+    ar = Archive(CONNECTION_INFORMATION) # Connection information varies depending on the database type
     ar.create_archive() # Use this only if you are creating an archive from scratch
 
 Done, your archive is ready and awaiting its cards. From version 0.2.0 and up, the library supports working with MySQL, PostgreSQL and SQLite databases. For details on the connection information for each database type, check :doc:`archive`.
@@ -49,7 +49,7 @@ Inserting a new card
 
 :doc:`cards` contain very little information, so creating a new card is very easy::
 
-    from infocards import Archive
+    from infocards.archive import Archive
 
     ar = Archive('myarchive.dat')
 
@@ -68,7 +68,7 @@ Retrieving a card
 
 :doc:`cards` have a unique title. In order to get the information on a specific card, simply ask the archive for that title::
 
-    from infocards import Archive
+    from infocards.archive import Archive
 
     ar = Archive('myarchive.dat')
 
@@ -80,7 +80,7 @@ Retrieving a list of all the cards
 
 If you want a complete list of all the :doc:`cards` in the archive, simply do::
 
-    from infocards import Archive
+    from infocards.archive import Archive
 
     ar = Archive('myarchive.dat')
 
@@ -92,7 +92,7 @@ Updating a card
 
 :doc:`cards` can also be modified/updated easily so that you can add that information you forgot when creating the card!::
 
-    from infocards import Archive
+    from infocards.archive import Archive
 
     ar = Archive('myarchive.dat')
 
@@ -110,7 +110,7 @@ Removing a card
 
 Of course, you can even remove :doc:`cards` from your archive. Simply use the card title, exactly the same as when retrieving a card::
 
-    from infocards import Archive
+    from infocards.archive import Archive
 
     ar = Archive('myarchive.dat')
 
@@ -122,7 +122,7 @@ Searching for cards
 
 Having to know all the card titles by heart can (and will) become frustrating. For that reason, the library includes a simple search functionality::
 
-    from infocards import Archive
+    from infocards.archive import Archive
 
     ar = Archive('myarchive.dat')
 

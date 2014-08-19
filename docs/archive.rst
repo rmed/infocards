@@ -29,7 +29,7 @@ MySQL
 
 *infocards* uses the `PyMySQL`_ module in order to connect to MySQL databases. The parameters for the connection are passed to the *Archive* constructor like so::
 
-    from infocards import Archive
+    from infocards.archive import Archive
 
     ar = Archive(
         mysql = DATABASE_HOST,
@@ -44,7 +44,7 @@ PostgreSQL
 
 For PostgreSQL databases, the `pg8000`_ module is used. It's parameters are similar to those of the MySQL database::
 
-    from infocards import Archive
+    from infocards.archive import Archive
 
     ar = Archive(
         postgresql = DATABASE_HOST
@@ -62,7 +62,7 @@ SQLite
 
 Connection to SQLite databases is done through the builtin *sqlite* module in Python::
 
-    from infocards import Archive
+    from infocards.archive import Archive
 
     ar = Archive(
         sqlite = DATABASE_PATH)
@@ -74,7 +74,7 @@ Search
 
 The *search* functionality of the archive can be tunned a bit in order to obtain different results. Modyfing the *likelihood* parameter (default is 80) allows you to specify the percentage on which two words are considered similar. The *relevance* represents the percentage (default is 50) of search query words that must be included in the card tag list in order to consider that card as relevant to the search::
 
-    from infocards import Archive
+    from infocards.archive import Archive
 
     # ar = Archive(...)
 
