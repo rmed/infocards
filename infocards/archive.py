@@ -64,24 +64,25 @@ class Archive(object):
         These are the parameters required for each database type.
 
         MySQL - requires 'pymysql' module
-            mysql = database host
-            user = database user
-            passwd = database password (if any)
-            port = database port (if any)
-            db = database name
+            * mysql = database host
+            * user = database user
+            * passwd = database password (if any)
+            * port = database port (if any)
+            * db = database name
 
         PostgreSQL - requires 'pg8000' module
-            postgresql = database host
-            user = database user
-            passwd = database password (if any)
-            port = database port (if any)
-            db = database name
-            ssl = whether to use SSL or not (defaults to false)
+            * postgresql = database host
+            * user = database user
+            * passwd = database password (if any)
+            * port = database port (if any)
+            * db = database name
+            * ssl = whether to use SSL or not (defaults to false)
 
         SQLite
-            sqlite = absolute path to the database file
+            * sqlite = absolute path to the database file
 
-        :raises ConnectionError: Error connecting to the database
+        :raises ConnectionError: raised when there is an error connecting
+            to the database
     """
 
     def __init__(self, **kwargs):

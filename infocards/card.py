@@ -42,9 +42,6 @@ class Card(object):
             the *Card* object will store the tags as a list for
             easier access.
         :param datetime modified: last modification's date and time
-
-        Note that in order to be able to search for cards, it is necessary
-        to include tags.
     """
 
     def __init__(self, title, description, content, tags, modified):
