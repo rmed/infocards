@@ -32,6 +32,17 @@ class ArchiveError(Exception):
     pass
 
 
+class ConnectionError(ArchiveError):
+    """ Raised when an error occurs whilst trying to connect to a
+        database.
+
+        :param str message: error explanation
+    """
+
+    def __init__(self, message):
+        self.message = message
+
+
 class InsertError(ArchiveError):
     """ Raised when an error occurs whilst trying to insert a new card
         in the archive.

@@ -37,7 +37,8 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.types import VARCHAR
 from .card import Card
-from .exceptions import InsertError, NoCardFound, NotAnArchive, ParamError
+from .exceptions import ConnectionError, NotAnArchive, ParamError
+from .exceptions import InsertError, NoCardFound
 
 _Base = declarative_base()
 
@@ -79,13 +80,19 @@ class Archive(object):
 
         SQLite
             sqlite = absolute path to the database file
+
+        :raises ConnectionError: Error connecting to the database
     """
 
     def __init__(self, **kwargs):
-        self._engine = self._create_engine(**kwargs)
-        factory = sessionmaker(bind=self._engine)
-        self._scope = scoped_session(factory)
-        self._session = self._scope()
+        try:
+            self._engine = self._create_engine(**kwargs)
+            factory = sessionmaker(bind=self._engine)
+            self._scope = scoped_session(factory)
+            self._session = self._scope()
+
+        except Exception as e:
+            raise ConnectionError("Database connection error: " + str(e))
 
     def _insert(self, card):
         """ Insert the new card into the archive database.
