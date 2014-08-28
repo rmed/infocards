@@ -124,7 +124,7 @@ class Archive(object):
             host = "@" + info["mysql"]
             port = ""
             if "port" in info.keys():
-                port = ":" + info["port"]
+                port = ":" + str(info["port"])
             db = "/" + info["db"]
 
             conn_str = "mysql+pymysql://" + user + passwd + host + port + db
@@ -137,7 +137,7 @@ class Archive(object):
             host = "@" + info["postgresql"]
             port = ""
             if "port" in info.keys():
-                port = ":" + info["port"]
+                port = ":" + str(info["port"])
             db = "/" + info["db"]
             ssl = ""
             if "ssl" in info.keys():
