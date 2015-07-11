@@ -1,358 +1,354 @@
 # -*- coding: utf-8 -*-
 #
 # Simple information card archive library
-# https://github.com/RMed/infocards
+# https://github.com/rmed/infocards
 #
-# Copyright (C) 2014  Rafael Medina García <rafamedgar@gmail.com>
+# Copyright (C) 2015  Rafael Medina García <rafamedgar@gmail.com>
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Lesser General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-"""
-.. module:: archive
-    :platform: Unix, Windows
-    :synopsis: Archive operations
-
-.. moduleauthor:: Rafael Medina García <rafamedgar@gmail.com>
-"""
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from __future__ import absolute_import
 from datetime import datetime
 from fuzzywuzzy import fuzz
-from sqlalchemy import Column, DateTime, Integer, Text
-from sqlalchemy import create_engine, event, inspect
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.types import VARCHAR
-from .card import Card
-from .exceptions import ConnectionError, NotAnArchive, ParamError
-from .exceptions import InsertError, NoCardFound
-
-_Base = declarative_base()
+from peewee import *
+from .models import _db_proxy, Card, CardObj, Section, SectionObj, Relation
 
 
-class _Card(_Base):
-    __tablename__ = 'cards'
-
-    id = Column(Integer, primary_key=True)
-    title = Column(VARCHAR(256), unique=True)
-    description = Column(Text)
-    content = Column(Text)
-    tags = Column(Text)
-    modified = Column(DateTime, nullable=False)
-
-
-class Archive(object):
-    """ Database connection.
-
-        Currently supports MySQL, PostgreSQL, SQLite. 
-
-        **kwargs contains the database connection information. 
-
-        These are the parameters required for each database type.
-
-        MySQL - requires 'pymysql' module
-            * mysql = database host
-            * user = database user
-            * passwd = database password (if any)
-            * port = database port (if any)
-            * db = database name
-
-        PostgreSQL - requires 'pg8000' module
-            * postgresql = database host
-            * user = database user
-            * passwd = database password (if any)
-            * port = database port (if any)
-            * db = database name
-            * ssl = whether to use SSL or not (defaults to false)
-
-        SQLite
-            * sqlite = absolute path to the database file
-
-        :raises ConnectionError: raised when there is an error connecting
-            to the database
-    """
+class Archive:
 
     def __init__(self, **kwargs):
+        """ Initialize the archive according to the parameters passed.
+
+            These parameters vary from one DBMS to another.
+        """
+        # Need to initialize the database for the models
+        self.db = self._init_db(**kwargs)
+        _db_proxy.initialize(self.db)
+
+        # Create tables
+        self.db.create_tables([Card, Section, Relation], True)
+
+    def _init_db(self, **kwargs):
+        """ Parse the arguments and initialize the proper database.
+
+            The parameters used for each database are given directly to
+            their specific connectors:
+
+            - MySQL: PyMySQL
+            - SQLite: sqlite3
+            - PostgreSQL: psycopg2
+
+            Check their documentation for more information on the available
+            parameters.
+
+            Here we only care about the database type, which could be either
+            'mysql', 'sqlite' or 'postgres'
+
+            Returns an already initialized databased.
+        """
+        db_name = kwargs.pop('db_name')
+        db_type = kwargs.pop('db_type')
+
+        if db_type == 'mysql':
+            return MySQLDatabase(db_name, **kwargs)
+
+        elif db_type == 'postgres':
+            return PostgresqlDatabase(db_name, **kwargs)
+
+        elif db_type == 'sqlite':
+            return SqliteDatabase(db_name)
+
+        # Type was not correct
+        #TODO Exception
+
+    def add_card_to_section(self, cid=0, ctitle="", sid=0, sname="",):
+        """ Create a card-section relation.
+
+            cid     -- card id to add
+            ctitle  -- title of the card add
+            sid     -- section id
+            sname   -- section name
+
+            Returns boolean for success or failure
+        """
+        attrs = {
+            'card': None,
+            'section': None
+        }
+
+        if cid:
+            attrs['card'] = cid
+        else:
+            attrs['card'] = self.get_card(title=ctitle).id
+
+        if sid:
+            attrs['section'] = sid
+        else:
+            attrs['section'] = self.get_section(name=sname).id
+
+        rel = Relation.create(**attrs)
+
+        if rel:
+            return True
+
+        return False
+
+    def cards(self):
+        """ Return a generator for all the cards in the archive. """
+        cards = Card.select()
+
+        for card in cards:
+            yield CardObj(card)
+
+    def delete_card(self, cid=0, title=""):
+        """ Delete a card from the archive.
+
+            This will also delete any dependent relation.
+
+            Returns boolean for success or failure.
+        """
         try:
-            self._engine = self._create_engine(**kwargs)
-            factory = sessionmaker(bind=self._engine)
-            self._scope = scoped_session(factory)
-            self._session = self._scope()
+            if cid:
+                card = Card.get(Card.id == cid)
 
-        except Exception as e:
-            raise ConnectionError("Database connection error: " + str(e))
+            elif title:
+                card = Card.get(Card.title == title)
 
-    def _insert(self, card):
-        """ Insert the new card into the archive database.
+            else:
+                return False
 
-            :param _Card card: new card to insert
+        except DoesNotExist:
+            return False
+
+        deleted = card.delete_instance(recursive=True, delete_nullable=True)
+
+        if deleted > 0:
+            return True
+
+        return False
+
+    def delete_section(self, name="", sid=0):
+        """ Delete a section from the archive.
+
+            This will also delete any dependent relation.
+
+            Returns boolean for success or failure.
         """
-        self._session.add(card)
-
-    def _delete(self, card):
-        """ Delete the specified card from the archive database.
-
-            :param _Card card: card to delete
-        """
-        self._session.delete(card)
-
-    def _create_engine(self, **info):
-        """ Set the corresponding engine conenction depending on the supplied
-            **info.
-
-            :returns: SQLAlchemy engine
-        """
-        conn_str = ""
-        if "mysql" in info.keys():
-            user = info["user"]
-            passwd = ""
-            if "passwd" in info.keys():
-                passwd = ":" + info["passwd"]
-            host = "@" + info["mysql"]
-            port = ""
-            if "port" in info.keys():
-                port = ":" + str(info["port"])
-            db = "/" + info["db"]
-
-            conn_str = "mysql+pymysql://" + user + passwd + host + port + db
-
-        elif "postgresql" in info.keys():
-            user = info["user"]
-            passwd = ""
-            if "passwd" in info.keys():
-                passwd = ":" + info["passwd"]
-            host = "@" + info["postgresql"]
-            port = ""
-            if "port" in info.keys():
-                port = ":" + str(info["port"])
-            db = "/" + info["db"]
-            ssl = ""
-            if "ssl" in info.keys():
-                if info["ssl"]:
-                    ssl = "?ssl=true"
-                else:
-                    ssl = ""
-
-            conn_str = "postgresql+pg8000://" + user + passwd + host + port + db + ssl
-
-        elif "sqlite" in info.keys():
-            conn_str = "sqlite:////" + info["sqlite"]
-
-        return create_engine(conn_str)
-
-    @event.listens_for(_Card, 'before_insert')
-    @event.listens_for(_Card, 'before_update')
-    def _set_date(mapper, connection, target):
-        """ Automatically set the modification date on the record. """
-        target.modified = datetime.now()
-
-    def _update(self, card, new_card):
-        """ Updates the content of a card with the new card.
-
-            :param _Card card: card to update
-            :param Card new_card: new card info
-        """
-        card.title = new_card.title
-        card.description = new_card.description
-        card.content = new_card.content
-        card.tags = Card.tag_string(new_card.tags)
-
-    def all(self):
-        """ Obtain a list of all the cards stored in the archive.
-
-            :returns: list of Card objects
-
-            :raises NotAnArchive: raised when the Archive tables do
-                not exist in the database
-        """
-        if not self.is_archive():
-            raise NotAnArchive("Database is not an Archive, missing tables")
-
-        card_list = []
-        for c in self._session.query(_Card).all():
-            new_card = Card(
-                c.title,
-                c.description,
-                c.content,
-                c.tags,
-                c.modified)
-            card_list.append(new_card)
-
-        return card_list
-
-    def create_archive(self):
-        """ Create the corresponding schemas in the database. Must be used
-            when connecting to an empty database.
-        """
-        _Base.metadata.create_all(self._engine)
-
-    def get_card(self, title):
-        """ Obtain a card from the archive.
-
-            This is a direct search, so the title (or the row id) must
-            be written as in the stored card.
-
-            :param str title: title of the card to get
-
-            :raises NoCardFound: raised when the card does not exist
-            :raises NotAnArchive: raised when the Archive tables do
-                not exist in the database
-        """
-        if not self.is_archive():
-            raise NotAnArchive("Database is not an Archive, missing tables")
-
         try:
-            c = self._session.query(_Card).filter(_Card.title == title).one()
-            result = Card(
-                c.title,
-                c.description,
-                c.content,
-                c.tags,
-                c.modified)
-            return result
-        except NoResultFound:
-            raise NoCardFound("Card '%s' does not exist" % title)
+            if name:
+                section = Section.get(Section.name == name)
 
-    def is_archive(self):
-        """ Check whether the database has the required tables to be
-            considered as an Archive.
+            elif sid:
+                section = Section.get(Section.id == sid)
 
-            :returns: True or False
+            else:
+                return False
+
+        except DoesNotExist:
+            return False
+
+        deleted = section.delete_instance(recursive=True, delete_nullable=True)
+
+        if deleted > 0:
+            return True
+
+        return False
+
+    def get_card(self, cid=0, title=""):
+        """ Obtain a specific card from the archive.
+
+            The card is fetched by its unique id for simplicity, but is
+            also possible to do it by title, given it is also unique.
+
+            In case both of them are present, card id has higher priority.
         """
-        insp = inspect(self._engine)
-        return _Card.__tablename__ in insp.get_table_names()
-
-    def new_card(self, title="", description="", content="", tags=""):
-        """ Create a new card for the archive.
-
-            :param str title: title of the card
-            :param str description: description of the card
-            :param str content: plain text content of the card
-            :param str tags: sequence of tags identifying the card separated
-                by whitespaces
-
-            :raises InsertError: raised when a card already exists in
-                the archive
-            :raises NotAnArchive: raised when the Archive tables do
-                not exist in the database
-        """
-        if not self.is_archive():
-            raise NotAnArchive("Database is not an Archive, missing tables")
-
         try:
-            new_card = _Card(
-                title=title,
-                description=description,
-                content=content,
-                tags=Card.normalize(tag_string=tags))
-            self._insert(new_card)
-            self._session.commit()
-        except IntegrityError:
-            raise InsertError("Card '%s' already exists" % title)
+            if cid:
+                return CardObj(Card.get(Card.id == cid))
 
-    def remove_card(self, title):
-        """ Remove a card from the archive.
+            elif title:
+                return CardObj(Card.get(Card.title == title))
 
-            :param str title: title of the card to remove
+        except DoesNotExist:
+            return None
 
-            :raises NoCardFound: raised when the card cannot be found
-            :raises NotAnArchive: raised when the Archive tables do
-                not exist in the database
+        return None
+
+    def get_section(self, name="", sid=0):
+        """ Obtain a specific section from the archive.
+
+            In this case, sections should have a simple name that easily
+            identifies them, therefore priority is given to the name rather
+            than to the section id.
         """
-        if not self.is_archive():
-            raise NotAnArchive("Database is not an Archive, missing tables")
-
         try:
-            c = self._session.query(_Card).filter(_Card.title == title).one()
-            self._delete(c)
-            self._session.commit()
-        except NoResultFound:
-            raise NoCardFound("Card '%s' does not exist" % title)
+            if name:
+                return SectionObj(Section.get(Section.name == name))
 
-    def search(self, query, likelihood=80, relevance=50):
-        """ Search for cards using the specified query.
+            elif sid:
+                return SectionObj(Section.get(Section.id == sid))
 
-            A list of tags is created from the *title* and *tags* of the
-            card and then compared with the query. If the percentage of
-            query words present in the card list is greater or equal
-            than *relevance*, then that card is added to the result.
+        except DoesNotExist:
+            return None
 
-            If the query is empty, then a list of all the cards in the
-            archive is returned.
+        return None
 
-            :param str query: search query
-            :param int likelihood: percentage for which two words are
-                considered to be alike (0-100)
-            :param int relevance: percentage for which a search query is
-                considered relevant to the card. (0-100)
+    def new_card(self, title, desc, content, tags, author="UNKNOWN"):
+        """ Add a new card to the archive.
 
-            :returns: list of **Card**
+            title   -- title of the card, must be unique
+            desc    -- short description of the card
+            content -- main content of the card
+            tags    -- space-separated tags for the card
+            author  -- optional name of the author of the card
 
-            :raises NotAnArchive: raised when the Archive tables do
-                not exist in the database
+            Returns the newly created card
         """
-        if not self.is_archive():
-            raise NotAnArchive("Database is not an Archive, missing tables")
+        attrs = {
+            'title': title,
+            'desc': desc,
+            'content': content,
+            'tags': tags,
+            'modified': datetime.now(),
+            'modified_by': author
+        }
 
-        if likelihood not in range(0, 100) or relevance not in range(0, 100):
-            raise ParamError(
-                    "likelihood and relevance must be in range 0-100")
+        return CardObj(Card.create(**attrs))
 
-        words = Card.tag_list(query)
-        if not words:
-            return self.all()
+    def new_section(self, name):
+        """ Create a new section in the archive.
 
-        result = []
-        for c in self._session.query(_Card).order_by(_Card.title):
-            common = []
+            name -- name of the section, must be unique
 
-            for tag in Card.tag_list(' '.join([c.title, c.tags])):
-                for word in words:
-                    if fuzz.ratio(word, tag) >= likelihood:
-                        common.append(word)
-                        common = list(set(common))
+            Returns the newly created section
+        """
+        attrs = {
+            'name': name
+        }
+
+        return SectionObj(Section.create(**attrs))
+
+    def remove_card_from_section(self, cid=0, ctitle="", sid=0, sname="",):
+        """ Remove a card-section relation.
+
+            cid     -- card id to add
+            ctitle  -- title of the card add
+            sid     -- section id
+            sname   -- section name
+
+            Returns boolean for success or failure
+        """
+        if cid:
+            card = cid
+        else:
+            card = self.get_card(title=ctitle).id
+
+        if sid:
+            section = sid
+        else:
+            section = self.get_section(name=sname).id
+
+        rel = Relation.get(
+            Relation.card == card,
+            Relation.section == section)
+
+        if not rel:
+            return False
+
+        deleted = rel.delete_instance()
+
+        if deleted > 0:
+            return True
+
+        return False
+
+    def rename_section(self, newname, oldname="", sid=0):
+        """ Rename a section.
+
+            Returns the new section
+        """
+        section = self.get_section(oldname, sid)
+
+        if not section:
+            return None
+
+        section.name = newname
+        section.save()
+
+        return SectionObj(section)
+
+    def search(self, query, section_name="", section_id=0,
+        likelihood=80, relevance=50):
+        """ Search for relevant cards in the archive.
+
+            query      -- search terms, separated by blankspace
+            section    -- section to perform the search in. If not provided,
+                    will search the whole archive.
+            likelihood -- percentage for which to words should be considered
+                    similar.
+            relevance  -- percentage of query terms that must be present in
+                    a card for it to be considered relevant
+
+            Returns a generator.
+        """
+        search_terms = set([t.lower() for t in query.split()])
+        if not search_terms:
+            return []
+
+        # Get the list of cards to iterate
+        if section_id or section_name:
+            section = self.get_section(section_name, section_id)
+
+            if not section:
+                return []
+
+            # Raw card search
+            cards = (Card
+                .select()
+                .join(Relation)
+                .join(Section)
+                .where(Section.id == section.id))
+
+        else:
+            cards = Card.select()
+
+        # Compare each card
+        for card in cards:
+            s_card = "%s %s %s %s" % (
+                str(card.id), card.title, card.desc, card.tags)
+
+            card_terms = set([t.lower() for t in s_card.split()])
+
+            common = set()
+
+            for c_term in card_terms:
+                # Check each search term with those from card
+                for s_term in search_terms:
+                    if fuzz.partial_ratio(s_term, c_term) >= 80:
+                        common.add(s_term)
                         break
 
-            if int((len(common) / len(words)) * 100) >= relevance:
-                new_card = Card(
-                    c.title,
-                    c.description,
-                    c.content,
-                    c.tags,
-                    c.modified)
-                result.append(new_card)
+            # Check if the card is relevant
+            if int((len(common) / len(search_terms)) * 100) < 50:
+                continue
 
-        return result
+            yield CardObj(card)
 
-    def update_card(self, title, new_card):
-        """ Update the information of a card.
+    def sections(self):
+        """ Return a generator for all the sections in the archive. """
+        sections = Section.select()
 
-            :param str title: title of the card to update
-            :param Card new_card: *Card* object with the updated information
-
-            :raises NoCardFound: raised when the card to update is not found
-            :raises NotAnArchive: raised when the Archive tables do
-                not exist in the database
-        """
-        if not self.is_archive():
-            raise NotAnArchive("Database is not an Archive, missing tables")
-
-        try:
-            c = self._session.query(_Card).filter(_Card.title == title).one()
-            self._update(c, new_card)
-            self._session.commit()
-        except NoResultFound:
-            raise NoCardFound("Card '%s' does not exist" % title)
+        for section in sections:
+            yield SectionObj(section)
