@@ -1,54 +1,40 @@
-infocards
-=========
+# infocards [![PyPI version](https://img.shields.io/pypi/v/infocards.svg)](https://pypi.python.org/pypi/infocards)
 
-[![PyPI version](https://img.shields.io/pypi/v/infocards.svg)](https://pypi.python.org/pypi/infocards)
-
-A small Python library that allows storing *information cards* in an archive. Supports MySQL, PostgreSQL and SQLite databases.
+A small Python library for managing **information cards** in an archive. Supports MySQL, PostgreSQL and SQLite databases for the backend.
 
 **Compatible with Python 2 and 3.**
 
-License: **LGPLv3**
+License: **GPLv2**
 
-Requirements
-------------
+**Note: from version 0.5.0 and onwards, infocards is not backwards compatible.**
 
-- [fuzzywuzzy](https://github.com/seatgeek/fuzzywuzzy) >= 0.2.1
-- [pg8000](https://github.com/mfenniak/pg8000) >= 1.9.13
-- [PyMySQL](https://github.com/PyMySQL/PyMySQL) >= 0.6.2
-- [SQLAlchemy](http://www.sqlalchemy.org/) >= 0.9.7
+# Requirements
 
+Basic requirements (installed automatically with `pip`) are:
 
-Installation
-------------
+- [fuzzywuzzy](https://github.com/seatgeek/fuzzywuzzy) 0.5.0
+- [peewee](https://github.com/coleifer/peewee) 2.6.3
+- [python-Levenshtein](https://github.com/ztane/python-Levenshtein/) 0.12.0
+
+If you want to use MySQL or PostgreSQL for the backend, you will also need:
+
+- [psycopg2](http://initd.org/psycopg/) 2.6.1
+- [PyMySQL](https://github.com/PyMySQL/PyMySQL) 0.6.6
+
+# Installation
 
 Installing from source:
 
-```
-$ pip install /path/to/archive
-```
+~~~
+$ setup.py install
+~~~
 
 Installing from the Package Index (recommended):
-```
+
+~~~
 $ pip install infocards
-```
+~~~
 
-The 0.2.1 version of the `fuzzywuzzy` package is not available on PyPI, please install it from its [GitHub repository](https://github.com/seatgeek/fuzzywuzzy).
+# Documentation
 
-Documentation
--------------
-
-Documentation is [available online at Read the Docs](http://infocards.readthedocs.org)
-
-In order to build the documentation, you need to have Sphinx installed:
-
-```
-$ pip install Sphinx
-```
-
-Then go to the *docs* directory and run:
-
-```
-$ make html
-```
-
-The html documentation will be inside the *docs/_build/html* directory.
+Documentation is [available online](http://infocards.readthedocs.org) and contains the API reference as well as examples.

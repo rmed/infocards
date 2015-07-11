@@ -1,49 +1,52 @@
 infocards
 =========
 
-A small Python library that allows storing *information cards* in an archive. Supports MySQL, PostgreSQL and SQLite databases.
+A small Python library for managing **information cards** in an archive.
+Supports MySQL, PostgreSQL and SQLite databases for the backend.
 
-Compatible with **Python 2 and 3**
+**Compatible with Python 2 and 3.**
 
-.. _GitHub: https://github.com/RMed/infocards
+License: **GPLv2**
 
-Source code available on GitHub_
-
-License: **LGPLv3**
+**Note: from version 0.5.0 and onwards, infocards is not backwards
+compatible.**
 
 Requirements
-------------
-.. _fuzzywuzzy: https://github.com/seatgeek/fuzzywuzzy
-.. _pg8000: https://github.com/mfenniak/pg8000
-.. _PyMySQL: https://github.com/PyMySQL/PyMySQL
-.. _SQLAlchemy: http://www.sqlalchemy.org/
+============
 
-- fuzzywuzzy_ >= 0.2.1
-- pg8000_ >= 1.9.13
-- PyMySQL_ >= 0.6.2
-- SQLALchemy_ >= 0.9.7
+Basic requirements (installed automatically with ``pip``) are:
+
+-  `fuzzywuzzy <https://github.com/seatgeek/fuzzywuzzy>`__ 0.5.0
+-  `peewee <https://github.com/coleifer/peewee>`__ 2.6.3
+-  `python-Levenshtein <https://github.com/ztane/python-Levenshtein/>`__
+   0.12.0
+
+If you want to use MySQL or PostgreSQL for the backend, you will also
+need:
+
+-  `psycopg2 <http://initd.org/psycopg/>`__ 2.6.1
+-  `PyMySQL <https://github.com/PyMySQL/PyMySQL>`__ 0.6.6
 
 Installation
-------------
+============
 
-Installing from source archive file (Windows or UNIX)::
+Installing from source:
 
-    $ pip install path/to/archive
+::
 
-Installing from the package index (Windows or UNIX)::
+    $ setup.py install
+
+Installing from the Package Index (recommended):
+
+::
 
     $ pip install infocards
 
-The 0.2.1 version of the fuzzywuzzy_ package is not available on PyPI, please install it from its GitHub repository.
-
 Documentation
--------------
+=============
 
+Documentation is `available online <http://infocards.readthedocs.org>`__
+and contains the API reference as well as examples.
 
-Documentation is available online at Read the Docs http://infocards.readthedocs.org
-
-Building the documentation from source requires that *Sphinx* be installed in the machine. In the **docs** directory::
-
-    $ make html
-
-The documentation will be placed in the **docs/_build/html** directory.
+.. |PyPI version| image:: https://img.shields.io/pypi/v/infocards.svg
+   :target: https://pypi.python.org/pypi/infocards
