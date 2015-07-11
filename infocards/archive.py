@@ -23,10 +23,12 @@ from __future__ import absolute_import
 from datetime import datetime
 from fuzzywuzzy import fuzz
 from peewee import *
+from .exceptions import ArchiveConfigException, ArchiveConnectionException
+from .exceptions import ArchiveIntegrityException, ArchiveOperationException
 from .models import _db_proxy, Card, CardObj, Section, SectionObj, Relation
 
 
-class Archive:
+class Archive(object):
 
     def __init__(self, **kwargs):
         """ Initialize the archive according to the parameters passed.
@@ -37,8 +39,12 @@ class Archive:
         self.db = self._init_db(**kwargs)
         _db_proxy.initialize(self.db)
 
-        # Create tables
-        self.db.create_tables([Card, Section, Relation], True)
+        try:
+            # Create tables
+            self.db.create_tables([Card, Section, Relation], True)
+
+        except ImproperlyConfigured as e:
+            raise ArchiveConfigException(str(e))
 
     def _init_db(self, **kwargs):
         """ Parse the arguments and initialize the proper database.
@@ -61,17 +67,20 @@ class Archive:
         db_name = kwargs.pop('db_name')
         db_type = kwargs.pop('db_type')
 
-        if db_type == 'mysql':
-            return MySQLDatabase(db_name, **kwargs)
+        try:
+            if db_type == 'mysql':
+                return MySQLDatabase(db_name, **kwargs)
 
-        elif db_type == 'postgres':
-            return PostgresqlDatabase(db_name, **kwargs)
+            elif db_type == 'postgres':
+                return PostgresqlDatabase(db_name, **kwargs)
 
-        elif db_type == 'sqlite':
-            return SqliteDatabase(db_name)
+            elif db_type == 'sqlite':
+                return SqliteDatabase(db_name)
 
-        # Type was not correct
-        #TODO Exception
+        except OperationalError as e:
+            raise ArchiveConnectionException(str(e))
+
+        raise ArchiveConnectionException('Invalid database type')
 
     def add_card_to_section(self, cid=0, ctitle="", sid=0, sname="",):
         """ Create a card-section relation.
@@ -98,12 +107,13 @@ class Archive:
         else:
             attrs['section'] = self.get_section(name=sname).id
 
-        rel = Relation.create(**attrs)
+        try:
+            rel = Relation.create(**attrs)
 
-        if rel:
-            return True
+        except DoesNotExist as e:
+            return False
 
-        return False
+        return True
 
     def cards(self):
         """ Return a generator for all the cards in the archive. """
@@ -225,7 +235,13 @@ class Archive:
             'modified_by': author
         }
 
-        return CardObj(Card.create(**attrs))
+        try:
+
+            return CardObj(Card.create(**attrs))
+
+        except IntegrityError as e:
+            self.db.rollback()
+            raise ArchiveIntegrityException(str(e))
 
     def new_section(self, name):
         """ Create a new section in the archive.
@@ -238,7 +254,12 @@ class Archive:
             'name': name
         }
 
-        return SectionObj(Section.create(**attrs))
+        try:
+            return SectionObj(Section.create(**attrs))
+
+        except IntegrityError as e:
+            self.db.rollback()
+            raise ArchiveIntegrityException(str(e))
 
     def remove_card_from_section(self, cid=0, ctitle="", sid=0, sname="",):
         """ Remove a card-section relation.
@@ -260,11 +281,12 @@ class Archive:
         else:
             section = self.get_section(name=sname).id
 
-        rel = Relation.get(
-            Relation.card == card,
-            Relation.section == section)
+        try:
+            rel = Relation.get(
+                Relation.card == card,
+                Relation.section == section)
 
-        if not rel:
+        except DoesNotExist as e:
             return False
 
         deleted = rel.delete_instance()
@@ -279,10 +301,18 @@ class Archive:
 
             Returns the new section
         """
-        section = self.get_section(oldname, sid)
+        try:
+            if oldname:
+                section = Section.get(Section.name == name)
 
-        if not section:
-            return None
+            elif sid:
+                section = Section.get(Section.id == sid)
+
+            else:
+                return None
+
+        except DoesNotExist:
+            raise ArchiveOperationException('section does not exist')
 
         section.name = newname
         section.save()
