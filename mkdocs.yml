@@ -1,0 +1,7 @@
+site_name: infocards
+pages:
+- Getting started: 'index.md'
+- The Archive: 'archive.md'
+- Accessing an Archive: 'access_archive.md'
+- Archive operations: 'ops_archive.md'
+theme: readthedocs
