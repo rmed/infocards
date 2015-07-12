@@ -48,5 +48,4 @@ Documentation
 Documentation is `available online <http://infocards.readthedocs.org>`__
 and contains the API reference as well as examples.
 
-.. |PyPI version| image:: https://img.shields.io/pypi/v/infocards.svg
-   :target: https://pypi.python.org/pypi/infocards
+You may also build the documentation source in the ``docs/`` directory using MKDocs.
