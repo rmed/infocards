@@ -25,12 +25,12 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the relevant file
-with open(path.join(here, 'DESCRIPTION.rst'), encoding='utf-8') as f:
+with open(path.join(here, 'DESCRIPTION.rst')) as f:
     long_description = f.read()
 
 setup(
     name='infocards',
-    version='0.5.0',
+    version='0.5.1',
 
     description='Simple information card archive library',
     long_description=long_description,
