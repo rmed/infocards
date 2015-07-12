@@ -4,4 +4,7 @@ pages:
 - The Archive: 'archive.md'
 - Accessing an Archive: 'access_archive.md'
 - Archive operations: 'ops_archive.md'
+- API reference:
+    - 'Models': 'reference/models.md'
+    - 'Archive' : 'reference/archive.md'
 theme: readthedocs

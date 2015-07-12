@@ -263,7 +263,12 @@ class Archive(object):
         modcard.modified = datetime.now()
         modcard.modified_by = author
 
-        modcard.save()
+        try:
+            modcard.save()
+
+        except IntegrityError as e:
+            self.db.rollback()
+            raise ArchiveIntegrityException(str(e))
 
         return CardObj(modcard)
 
@@ -367,7 +372,12 @@ class Archive(object):
             raise ArchiveOperationException('section does not exist')
 
         section.name = newname
-        section.save()
+        try:
+            section.save()
+
+        except IntegrityError as e:
+            self.db.rollback()
+            raise ArchiveIntegrityException(str(e))
 
         return SectionObj(section)
 
