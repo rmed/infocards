@@ -82,7 +82,7 @@ class Archive(object):
 
         raise ArchiveConnectionException('Invalid database type')
 
-    def add_card_to_section(self, cid=0, ctitle="", sid=0, sname="",):
+    def add_card_to_section(self, cid=0, ctitle="", sid=0, sname=""):
         """ Create a card-section relation.
 
             cid     -- card id to add
@@ -215,6 +215,58 @@ class Archive(object):
 
         return None
 
+    def modify_card(self, card=None, cid=0, ctitle="",
+        title="", desc="", content="", tags="", author="UNKNOWN"):
+        """ Modifies an already existing card overwriting its information
+            with the one provided.
+
+            card    -- CardObj instance from which to obtain the new
+                information. It is given priority if present.
+                Will also obtain the card id from here.
+            cid     -- id of the card to modify
+            ctitle  -- title of the card to modify
+
+            title   -- new title for the card
+            desc    -- new description for the card
+            content -- new content for the card
+            tags    -- new tags for the card
+            author  -- author of the modification, defaults to 'UNKNOWN'.
+                This one is not obtained from the card object
+
+            Note that if the card argument is not provided, only the
+            arguments present will be overwritten, meaning that it is
+            only necessary to pass the relevant information to modify.
+
+            Returns the updated card
+        """
+        if card:
+            cid = card.id
+            title = card.title
+            desc = card.desc
+            content = card.content
+            tags = card.tags
+
+        try:
+            if cid:
+                modcard = Card.get(Card.id == cid)
+
+            elif title:
+                modcard = Card.get(Card.title == title)
+
+        except DoesNotExist:
+            return None
+
+        modcard.title = title if title else modcard.title
+        modcard.desc = desc if desc else modcard.desc
+        modcard.content = content if content else modcard.content
+        modcard.tags = tags if tags else modcard.tags
+        modcard.modified = datetime.now()
+        modcard.modified_by = author
+
+        modcard.save()
+
+        return CardObj(modcard)
+
     def new_card(self, title, desc, content, tags, author="UNKNOWN"):
         """ Add a new card to the archive.
 
@@ -261,7 +313,7 @@ class Archive(object):
             self.db.rollback()
             raise ArchiveIntegrityException(str(e))
 
-    def remove_card_from_section(self, cid=0, ctitle="", sid=0, sname="",):
+    def remove_card_from_section(self, cid=0, ctitle="", sid=0, sname=""):
         """ Remove a card-section relation.
 
             cid     -- card id to add
@@ -319,8 +371,7 @@ class Archive(object):
 
         return SectionObj(section)
 
-    def search(self, query, section_name="", section_id=0,
-        likelihood=80, relevance=50):
+    def search(self, query, sname="", sid=0, likelihood=80, relevance=50):
         """ Search for relevant cards in the archive.
 
             query      -- search terms, separated by blankspace
