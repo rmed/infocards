@@ -38,3 +38,5 @@ $ pip install infocards
 # Documentation
 
 Documentation is [available online](http://infocards.readthedocs.org) and contains the API reference as well as examples.
+
+You may also build the documentation source in the `docs/` directory using MKDocs.
