@@ -55,7 +55,7 @@ In both cases, either the id or the title/name can be used to perform the identi
 
 ---
 
-#### cards()
+#### _**cards()**_
 
 Obtain all the cards in the archive
 
@@ -262,7 +262,7 @@ Generator: cards relevant to the search, or an empty list if no cards were found
 
 ---
 
-#### sections()
+#### _**sections()**_
 
 Obtain all the sections in the archive
 
