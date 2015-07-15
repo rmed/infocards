@@ -108,9 +108,9 @@ class Archive(object):
             attrs['section'] = self.get_section(name=sname).id
 
         try:
-            rel = Relation.create(**attrs)
+            Relation.create(**attrs)
 
-        except DoesNotExist as e:
+        except DoesNotExist:
             return False
 
         return True
@@ -343,7 +343,7 @@ class Archive(object):
                 Relation.card == card,
                 Relation.section == section)
 
-        except DoesNotExist as e:
+        except DoesNotExist:
             return False
 
         deleted = rel.delete_instance()
@@ -360,7 +360,7 @@ class Archive(object):
         """
         try:
             if oldname:
-                section = Section.get(Section.name == name)
+                section = Section.get(Section.name == oldname)
 
             elif sid:
                 section = Section.get(Section.id == sid)
@@ -396,14 +396,14 @@ class Archive(object):
         """
         search_terms = set([t.lower() for t in query.split()])
         if not search_terms:
-            return []
+            return
 
         # Get the list of cards to iterate
         if section_id or section_name:
             section = self.get_section(section_name, section_id)
 
             if not section:
-                return []
+                return
 
             # Raw card search
             cards = (Card
