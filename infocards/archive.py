@@ -399,8 +399,8 @@ class Archive(object):
             return
 
         # Get the list of cards to iterate
-        if section_id or section_name:
-            section = self.get_section(section_name, section_id)
+        if sid or sname:
+            section = self.get_section(sname, sid)
 
             if not section:
                 return
