@@ -30,7 +30,7 @@ with open(path.join(here, 'DESCRIPTION.rst')) as f:
 
 setup(
     name='infocards',
-    version='0.5.2',
+    version='0.5.3',
 
     description='Simple information card archive library',
     long_description=long_description,
